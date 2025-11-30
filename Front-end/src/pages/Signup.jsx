@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import api from "../api/api";  // make sure path is correct
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Full name required" }),
@@ -13,9 +14,22 @@ export default function Signup() {
     resolver: zodResolver(signupSchema)
   });
 
-  const onSubmit = (data) => {
-    console.log("Signup Data:", data);
-    // Later → call backend API
+  // ✅ THIS is the ONLY onSubmit we need
+  const onSubmit = async (data) => {
+    try {
+      const res = await api.post("/auth/register", data);
+
+      console.log("Signup Success:", res.data);
+
+      alert("Account created successfully!");
+
+      // Redirect to login page
+      window.location.href = "/";
+
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Signup failed");
+    }
   };
 
   return (
@@ -24,6 +38,7 @@ export default function Signup() {
         <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">Create Account</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <input
@@ -31,7 +46,7 @@ export default function Signup() {
               type="text"
               placeholder="Enter your full name"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                focus:ring-blue-500 focus:outline-none transition"
+              focus:ring-blue-500 focus:outline-none transition"
             />
             {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
           </div>
@@ -43,7 +58,7 @@ export default function Signup() {
               type="email"
               placeholder="Enter your email"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                focus:ring-blue-500 focus:outline-none transition"
+              focus:ring-blue-500 focus:outline-none transition"
             />
             {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
           </div>
@@ -55,7 +70,7 @@ export default function Signup() {
               type="password"
               placeholder="Enter your password"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-                focus:ring-blue-500 focus:outline-none transition"
+              focus:ring-blue-500 focus:outline-none transition"
             />
             {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
           </div>
