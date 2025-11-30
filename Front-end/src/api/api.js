@@ -1,10 +1,12 @@
+// src/api/api.js
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://task-manager-6crr.onrender.com", // backend URL
+  baseURL: "https://task-manager-6crr.onrender.com/api", // ✔ CORRECT
+  withCredentials: false, // You use token, so no cookies
 });
 
-// Add token to every request if exists
+// Attach token automatically
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
   if (token) req.headers.Authorization = `Bearer ${token}`;
