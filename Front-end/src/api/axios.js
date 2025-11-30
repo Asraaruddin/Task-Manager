@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://task-manager-6crr.onrender.com",
   withCredentials: false, // FIX — must be FALSE because you use TOKEN header, not cookies
 });
