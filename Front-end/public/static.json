@@ -1,0 +1,10 @@
+{
+  "root": "build/",
+  "cleanUrls": true,
+  "rewrite": [
+    {
+      "source": "/**",
+      "destination": "/index.html"
+    }
+  ]
+}
