@@ -12,13 +12,16 @@ connectDB();
 
 const app = express();
 
-// CORS CONFIG
+// CORS CONFIG (LOCAL + RENDER FRONTEND)
 app.use(
   cors({
-    origin: "http://localhost:5173", // frontend
+    origin: [
+      "http://localhost:5173",                   // Local development
+      "https://task-manager-1-zwka.onrender.com" // Render frontend URL
+    ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+    credentials: true
   })
 );
 
@@ -34,7 +37,7 @@ app.get("/", (req, res) => {
   res.send("Task Manager Backend Running...");
 });
 
-// Global Error Handler (optional but recommended)
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err.message);
   res.status(500).json({ message: "Server Error", error: err.message });
