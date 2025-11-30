@@ -16,16 +16,17 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 /**
- * Dashboard - Tasks UI
- * - Fixed: priority selection + priority filter working
- * - Fixed: filter dropdown/stuck UI using outside click handlers + refs
- * - Profile dropdown is stable (toggle on click) instead of hover
- * - Toasts on actions
+ * Responsive Dashboard.jsx
+ * - Mobile-first responsive layout (stacks on small screens, inline on md+)
+ * - Priority selection + filter fixed
+ * - Filter menu closes after selection (and when clicking outside)
+ * - Profile menu toggle on click (stable)
+ * - Save button is aligned, not floating (uses responsive layout)
  *
- * Requires:
- *  - API axios instance with baseURL (e.g. http://localhost:5000/api)
- *  - token in localStorage ("token")
- *  - user stored in localStorage ("user") OR backend profile endpoint
+ * Requirements:
+ * - Tailwind CSS available in the project
+ * - API axios instance configured at ../api/api
+ * - token in localStorage ("token") and user optionally in localStorage ("user")
  */
 
 export default function Dashboard() {
@@ -44,13 +45,13 @@ export default function Dashboard() {
   const [filterPriority, setFilterPriority] = useState("All");
   const [filterDate, setFilterDate] = useState("");
 
-  const [showPriorityMenu, setShowPriorityMenu] = useState(false); // add/edit priority menu
-  const [showFilterMenu, setShowFilterMenu] = useState(false); // unified filters
+  const [showPriorityMenu, setShowPriorityMenu] = useState(false);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const [completedTasks, setCompletedTasks] = useState([]);
 
-  // refs for outside click detection
+  // Refs for outside click detection
   const priorityRef = useRef(null);
   const filterRef = useRef(null);
   const profileRef = useRef(null);
@@ -61,25 +62,25 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Prefer local user; if not available, try profile endpoint (optional)
         if (!user && token) {
           try {
-            const res = await API.get("/auth/profile", {
+            const resProfile = await API.get("/auth/profile", {
               headers: { Authorization: `Bearer ${token}` },
             });
-            setUser(res.data);
-            localStorage.setItem("user", JSON.stringify(res.data));
+            setUser(resProfile.data);
+            localStorage.setItem("user", JSON.stringify(resProfile.data));
           } catch {
-            // ignore — user might be stored locally already
+            // ignore if profile endpoint not present
           }
         }
 
         const res = await API.get("/tasks", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setTasks(res.data || []);
-        setFilteredTasks(res.data || []);
-        setCompletedTasks((res.data || []).filter((t) => t.completed));
+        const data = res.data || [];
+        setTasks(data);
+        setFilteredTasks(data);
+        setCompletedTasks(data.filter((t) => t.completed));
       } catch (err) {
         console.error("Load tasks error:", err);
         toast.error("Failed to load tasks (backend offline?)");
@@ -88,7 +89,7 @@ export default function Dashboard() {
 
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once on mount
+  }, []);
 
   // ---------------------------
   // Outside click + Esc to close menus
@@ -146,7 +147,6 @@ export default function Dashboard() {
     // filterDate (exact date match)
     if (filterDate) {
       data = data.filter((t) => {
-        // some tasks may not have createdAt if older code inserted differently
         const d = t.createdAt ? new Date(t.createdAt) : new Date();
         const fd = new Date(filterDate);
         return (
@@ -250,7 +250,6 @@ export default function Dashboard() {
     setEditingTask(task);
     setTitle(task.title || "");
     setPriority(task.priority || "Low");
-    // make sure menus are closed when editing starts
     setShowPriorityMenu(false);
     setShowFilterMenu(false);
   };
@@ -289,21 +288,21 @@ export default function Dashboard() {
       <ToastContainer position="top-center" />
 
       {/* NAVBAR */}
-      <nav className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-800">
-            Welcome back, {user?.name ?? "User"} 👋
+      <nav className="bg-white shadow px-4 md:px-6 py-3 md:py-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-0">
+        <div className="flex-1">
+          <h1 className="text-xl md:text-2xl font-semibold text-gray-800">
+            Welcome back, {user?.name ?? "User"}!
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 mt-1">
             {completedTasks.length} completed • {tasks.length} total
           </p>
         </div>
 
-        {/* PROFILE - toggle on click (stable) */}
-        <div className="relative" ref={profileRef}>
+        {/* Profile - toggle on click */}
+        <div className="relative mt-2 md:mt-0" ref={profileRef}>
           <button
             onClick={() => setShowProfileMenu((s) => !s)}
-            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg shadow-sm"
             aria-label="Profile"
           >
             {user?.name?.charAt(0)?.toUpperCase() ?? "U"}
@@ -312,18 +311,18 @@ export default function Dashboard() {
           <div
             className={`absolute right-0 mt-3 transition-all duration-150 ${
               showProfileMenu ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
-            } bg-white shadow-xl border rounded-xl w-64 p-4 z-50`}
+            } bg-white shadow-xl border rounded-xl w-56 p-3 z-50`}
           >
-            <p className="flex items-center gap-2 text-gray-700 mb-1">
+            <p className="flex items-center gap-2 text-gray-700 mb-1 text-sm">
               <FiUser /> <span className="font-medium">{user?.name ?? "-"}</span>
             </p>
-            <p className="flex items-center gap-2 text-gray-700 mb-4">
-              <FiMail /> <span className="text-sm">{user?.email ?? "-"}</span>
+            <p className="flex items-center gap-2 text-gray-700 mb-3 text-sm">
+              <FiMail /> <span className="text-xs">{user?.email ?? "-"}</span>
             </p>
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 w-full border border-red-500 text-red-500 py-2 rounded-lg hover:bg-red-50"
+              className="flex items-center gap-2 w-full justify-center border border-red-500 text-red-500 py-2 rounded-lg hover:bg-red-50"
             >
               <FiLogOut /> Logout
             </button>
@@ -332,105 +331,119 @@ export default function Dashboard() {
       </nav>
 
       {/* MAIN */}
-      <div className="max-w-4xl mx-auto mt-8 p-4">
+      <div className="max-w-5xl mx-auto mt-6 px-4 md:px-6 pb-12">
         {/* ADD / EDIT TASK */}
-        <div className="bg-white p-5 rounded-xl shadow mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              {editingTask ? "Update Task" : "Add Task"}
-            </h2>
+        <div className="bg-white p-4 md:p-5 rounded-xl shadow mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+            <div className="flex-1">
+              <h2 className="text-lg font-semibold text-gray-800">
+                {editingTask ? "Update Task" : "Add Task"}
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Add a title, pick priority and save. On mobile these stack vertically.
+              </p>
+            </div>
 
             {editingTask && (
-              <button
-                onClick={cancelEdit}
-                className="text-sm text-gray-500 hover:underline"
-              >
-                Cancel
-              </button>
+              <div className="self-start md:self-auto">
+                <button onClick={cancelEdit} className="text-sm text-gray-500 hover:underline">
+                  Cancel
+                </button>
+              </div>
             )}
           </div>
 
-          <div className="flex gap-3 items-center">
-            <input
-              className="flex-1 border rounded-lg px-3 py-2"
-              placeholder="Task title..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-
-            {/* priority selection */}
-            <div className="relative" ref={priorityRef}>
-              <button
-                onClick={() => setShowPriorityMenu((s) => !s)}
-                className="px-4 py-2 bg-gray-100 rounded-lg flex items-center gap-2 border"
-                aria-haspopup="true"
-                aria-expanded={showPriorityMenu}
-              >
-                <span className={priority === "High" ? "text-red-600" : "text-gray-800"}>
-                  {priority}
-                </span>
-                <FiChevronDown />
-              </button>
-
-              {showPriorityMenu && (
-                <div className="absolute right-0 mt-2 bg-white shadow rounded-lg w-32 z-40">
-                  {["High", "Low"].map((p) => (
-                    <div
-                      key={p}
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => {
-                        setPriority(p);
-                        setShowPriorityMenu(false); // close immediately after choose
-                      }}
-                    >
-                      {p}
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* INPUT ROW - responsive */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            {/* Title - takes most space */}
+            <div className="md:col-span-7">
+              <input
+                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-200 outline-none"
+                placeholder="Task title..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
             </div>
 
-            <button
-              onClick={saveTask}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-            >
-              {editingTask ? "Save" : "Save"}
-            </button>
+            {/* Priority */}
+            <div className="md:col-span-3 flex items-center">
+              <div className="relative w-full" ref={priorityRef}>
+                <button
+                  onClick={() => setShowPriorityMenu((s) => !s)}
+                  className="w-full px-4 py-2 bg-gray-100 rounded-lg flex items-center justify-between gap-2 border"
+                  aria-haspopup="true"
+                  aria-expanded={showPriorityMenu}
+                >
+                  <span className={priority === "High" ? "text-red-600" : "text-gray-800"}>
+                    {priority}
+                  </span>
+                  <FiChevronDown />
+                </button>
+
+                {showPriorityMenu && (
+                  <div className="absolute right-0 mt-2 bg-white shadow rounded-lg w-full z-40">
+                    {["High", "Low"].map((p) => (
+                      <div
+                        key={p}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setPriority(p);
+                          setShowPriorityMenu(false);
+                        }}
+                      >
+                        {p}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Save button */}
+            <div className="md:col-span-2">
+              <button
+                onClick={saveTask}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
 
         {/* SEARCH + FILTERS */}
-        <div className="bg-white rounded-lg p-4 shadow mb-6 flex items-center gap-4">
+        <div className="bg-white p-4 rounded-lg shadow mb-6 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
           <div className="flex items-center bg-gray-50 border rounded-lg px-3 py-2 flex-1">
             <FiSearch className="text-gray-500 mr-2" />
             <input
-              className="w-full outline-none bg-transparent"
+              className="w-full outline-none bg-transparent text-sm"
               placeholder="Search tasks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
 
-          {/* unified filter button */}
+          {/* Unified filter button - anchored to right on md+ */}
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setShowFilterMenu((s) => !s)}
-              className="border rounded-lg px-4 py-2 flex items-center gap-2"
+              className="border rounded-lg px-3 py-2 flex items-center gap-2 bg-white"
               aria-haspopup="true"
               aria-expanded={showFilterMenu}
             >
-              <FiFilter /> Filters
+              <FiFilter /> <span className="hidden md:inline">Filters</span>
             </button>
 
             {showFilterMenu && (
               <div className="absolute right-0 mt-2 bg-white shadow-lg border rounded-lg w-64 p-4 z-40">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
                 <select
-                  className="w-full border rounded-lg px-3 py-2 mb-3"
+                  className="w-full border rounded-lg px-3 py-2 mb-3 text-sm"
                   value={filterPriority}
                   onChange={(e) => {
                     setFilterPriority(e.target.value);
-                    setShowFilterMenu(false); // close after selection
+                    // close after selection for quick mobile UX
+                    setShowFilterMenu(false);
                   }}
                 >
                   <option value="All">All</option>
@@ -441,13 +454,11 @@ export default function Dashboard() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
                 <input
                   type="date"
-                  className="w-full border rounded-lg px-3 py-2"
+                  className="w-full border rounded-lg px-3 py-2 text-sm"
                   value={filterDate}
                   onChange={(e) => {
                     setFilterDate(e.target.value);
-                    // keep filter menu open for date so user can see both controls,
-                    // but if you'd like to auto-close, uncomment:
-                    // setShowFilterMenu(false);
+                    // leave open so user can pick apply/clear, but we allow auto-close if desired
                   }}
                 />
 
@@ -463,10 +474,7 @@ export default function Dashboard() {
                   >
                     Clear
                   </button>
-                  <button
-                    onClick={() => setShowFilterMenu(false)}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded"
-                  >
+                  <button onClick={() => setShowFilterMenu(false)} className="px-3 py-1 text-sm bg-blue-600 text-white rounded">
                     Apply
                   </button>
                 </div>
@@ -483,11 +491,8 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-4">
             {filteredTasks.map((task) => (
-              <div
-                key={task._id}
-                className="bg-white border rounded-xl shadow p-4 flex justify-between items-start"
-              >
-                <div className="flex items-start gap-3">
+              <div key={task._id} className="bg-white border rounded-xl shadow p-4 flex flex-col md:flex-row justify-between items-start gap-3">
+                <div className="flex items-start gap-3 w-full">
                   <input
                     type="checkbox"
                     checked={task.completed}
@@ -496,46 +501,43 @@ export default function Dashboard() {
                     aria-label="Mark complete"
                   />
 
-                  <div>
-                    <h3
-                      className={`text-lg font-semibold ${
-                        task.completed ? "line-through text-gray-500" : ""
-                      }`}
-                    >
+                  <div className="flex-1">
+                    <h3 className={`text-lg font-semibold ${task.completed ? "line-through text-gray-500" : ""}`}>
                       {task.title}
                     </h3>
 
-                    <div className="flex gap-3 mt-1 items-center">
+                    <div className="flex gap-3 mt-2 items-center flex-wrap">
                       <span
                         className={`px-2 py-1 text-xs rounded-lg ${
-                          (task.priority || "Low") === "High"
-                            ? "bg-red-100 text-red-600"
-                            : "bg-blue-100 text-blue-600"
+                          (task.priority || "Low") === "High" ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
                         }`}
                       >
                         {(task.priority || "Low")}
                       </span>
 
-                      <span className="text-sm text-gray-600">
-                        {fmtDate(task.createdAt)}
-                      </span>
+                      <span className="text-sm text-gray-600">{fmtDate(task.createdAt)}</span>
+
+                      {task.description && <p className="text-sm text-gray-700 mt-2 md:mt-0">{task.description}</p>}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <FiEdit
-                    className="text-blue-600 cursor-pointer"
-                    size={20}
-                    onClick={() => startEdit(task)}
+                <div className="flex gap-3 mt-2 md:mt-0">
+                  <button
                     title="Edit"
-                  />
-                  <FiTrash2
-                    className="text-red-600 cursor-pointer"
-                    size={20}
-                    onClick={() => deleteTask(task._id)}
+                    onClick={() => startEdit(task)}
+                    className="p-2 rounded-md hover:bg-gray-100"
+                  >
+                    <FiEdit className="text-blue-600" size={18} />
+                  </button>
+
+                  <button
                     title="Delete"
-                  />
+                    onClick={() => deleteTask(task._id)}
+                    className="p-2 rounded-md hover:bg-gray-100"
+                  >
+                    <FiTrash2 className="text-red-600" size={18} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -545,17 +547,12 @@ export default function Dashboard() {
         {/* COMPLETED TASKS */}
         {completedTasks.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-xl font-semibold mb-3">
-              Completed Tasks ({completedTasks.length})
-            </h2>
+            <h2 className="text-xl font-semibold mb-3">Completed Tasks ({completedTasks.length})</h2>
 
             <div className="space-y-3">
               {completedTasks.map((t) => (
-                <div
-                  key={t._id}
-                  className="bg-green-50 border border-green-300 rounded-lg p-4 flex items-center gap-3"
-                >
-                  <FiCheckCircle className="text-green-600" size={22} />
+                <div key={t._id} className="bg-green-50 border border-green-300 rounded-lg p-4 flex items-center gap-3">
+                  <FiCheckCircle className="text-green-600" size={20} />
                   <span className="line-through text-gray-600">{t.title}</span>
                 </div>
               ))}
