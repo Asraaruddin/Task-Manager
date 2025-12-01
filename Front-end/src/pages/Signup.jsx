@@ -1,7 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import api from "../api/api";  // make sure path is correct
+import API from "../api/api";
+import { Toaster, toast } from "react-hot-toast";
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: "Full name required" }),
@@ -14,79 +15,97 @@ export default function Signup() {
     resolver: zodResolver(signupSchema)
   });
 
-  // ✅ THIS is the ONLY onSubmit we need
   const onSubmit = async (data) => {
     try {
-      const res = await api.post("/auth/register", data);
+      const res = await API.post("/auth/register", data);
 
-      console.log("Signup Success:", res.data);
+      toast.success("Account created successfully!", { duration: 1300 });
 
-      alert("Account created successfully!");
-
-      // Redirect to login page
-      window.location.href = "/";
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1300);
 
     } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Signup failed");
+      toast.error(error.response?.data?.message || "Signup failed");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
-        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">Create Account</h2>
+    <>
+      <Toaster position="top-center" />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8">
+          <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">
+            Create Account
+          </h2>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              {...register("name")}
-              type="text"
-              placeholder="Enter your full name"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-              focus:ring-blue-500 focus:outline-none transition"
-            />
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
-          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              {...register("email")}
-              type="email"
-              placeholder="Enter your email"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-              focus:ring-blue-500 focus:outline-none transition"
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-          </div>
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                {...register("name")}
+                type="text"
+                placeholder="Enter your full name"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                focus:ring-blue-500 focus:outline-none transition"
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              {...register("password")}
-              type="password"
-              placeholder="Enter your password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
-              focus:ring-blue-500 focus:outline-none transition"
-            />
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
-          </div>
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                {...register("email")}
+                type="email"
+                placeholder="Enter your email"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                focus:ring-blue-500 focus:outline-none transition"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition"
-          >
-            Signup
-          </button>
-        </form>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                {...register("password")}
+                type="password"
+                placeholder="Enter your password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 
+                focus:ring-blue-500 focus:outline-none transition"
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+              )}
+            </div>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Already have an account? <a href="/" className="text-blue-600 hover:underline font-medium">Login</a>
-        </p>
+            {/* Button */}
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-medium transition"
+            >
+              Signup
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-600 mt-6">
+            Already have an account?{" "}
+            <a href="/" className="text-blue-600 hover:underline font-medium">
+              Login
+            </a>
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
